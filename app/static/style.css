@@ -21,3 +21,9 @@ html, body {
     height: 400px;
     overflow: auto;
 }
+
+button{
+    border-color: var(--main_color);
+    background: var(--main_color);
+    width: 600px;
+}
