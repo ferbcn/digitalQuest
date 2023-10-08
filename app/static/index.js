@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {
-        console.log(event.data);
+        console.log("Message received: ", event.data);
         terminal.innerText += "> " + event.data + '\r';
         terminal.scrollTop = terminal.scrollHeight;
     };
@@ -28,13 +28,28 @@ document.addEventListener("DOMContentLoaded", function() {
 
     let command = "";
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
+        const key = event.key;
+        //console.log(key);
+        if (key === "Enter") {
             terminal.innerText += '\r';
             socket.send(command);
             command = "";
         }
+        else if (key === " ") {
+            event.preventDefault();
+            terminal.innerHTML += "&nbsp;";
+            command += " ";
+        }
+        else if (key === "Shift") {
+            // don't write when shift is pressed
+        }
+        else if (key === "Backspace") {
+            let str = terminal.innerText;
+            slice_str = str.slice(0, -1);
+            terminal.innerText = slice_str;
+            command = command.slice(0, -1);
+        }
         else{
-            const key = event.key;
             command += key;
             terminal.innerText += key;
         }
