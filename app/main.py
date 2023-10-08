@@ -52,8 +52,15 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
+            elif data == "help":
+                reply = "Command list: \n help\n clear\n exit"
+                await websocket.send_text(reply)
+            elif data == "clear":
+                pass
+            elif data == "exit":
+                await websocket.send_text("Bye!")
             else:
-                await websocket.send_text(data)
+                await websocket.send_text("Unknown command!")
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)

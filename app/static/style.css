@@ -1,5 +1,5 @@
 :root {
-  --main_color: #d8bfd8;
+  --main_color: lightgrey;
   --bg_color: #212529;
   --white: #ffffff;
 }
@@ -10,6 +10,10 @@ html, body {
     background-color: var(--bg_color);
     color: var(--main_color);
 }
+h5{
+    color: green;
+    margin-top: 0px;
+}
 
 .terminal {
     color: lightgrey;
@@ -17,13 +21,31 @@ html, body {
     color: #ccc;
     padding: 10px;
     padding-bottom: 30px;
-    width: 600px;
-    height: 400px;
+    min-width: 400px;
+    max-width: 800px;
+    height: 600px;
     overflow: auto;
 }
 
 button{
     border-color: var(--main_color);
     background: var(--main_color);
-    width: 600px;
+    min-width: 400px;
+    max-width: 800px;
+}
+
+/* By default, hide the button */
+.mobile-only {
+    display: none;
+}
+
+/* Show the button on screens smaller than 768px wide (typical breakpoint for tablets and below) */
+@media screen and (max-width: 767px) {
+    .mobile-only {
+        display: block;
+    }
+}
+
+#cursor {
+    /*font-size: 20px;*/
 }
