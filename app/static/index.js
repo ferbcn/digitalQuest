@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     socket.onmessage = (event) => {
         console.log("Message received: ", event.data);
+        // Special commands received from server
         if (event.data == "clear"){
             terminal.innerText = "";
             // add cursor to end
@@ -18,13 +19,15 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("bye!");
             location.reload();
         }
+        // default behaviour: print text received from server
         else{
             let str = terminal.innerText;
-            terminal.innerText = str.slice(0, -1);
+            terminal.innerText = str.slice(0, -2);
             terminal.innerText += event.data + '\r';
-            terminal.scrollTop = terminal.scrollHeight;
             // add cursor to end
             addCursor(terminal);
+            // scroll to bottom of <div>
+            terminal.scrollTop = terminal.scrollHeight;
         }
 
     };
@@ -48,10 +51,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const key = event.key;
         //console.log(key);
         if (key === "Enter") {
-            let str = terminal.innerText;
-            terminal.innerText = str.slice(0, -1);
-            terminal.innerText += '\r';
             socket.send(command);
+            newLine(terminal);
             addCursor(terminal);
             command = "";
         }
@@ -78,6 +79,12 @@ document.addEventListener("DOMContentLoaded", function() {
             let str = terminal.innerText;
             slice_str = str.slice(0, -1);
             terminal.innerText = slice_str + key;
+            addCursor(terminal);
+        }
+
+        // catch line overflow
+        if (command.length % 60 == 0 ){
+            newLine(terminal);
             addCursor(terminal);
         }
     });
@@ -109,4 +116,10 @@ function addCursor (terminal) {
     spanElement.id = "cursor";
     spanElement.textContent = "|";
     terminal.appendChild(spanElement);
-        }
+}
+
+function newLine (terminal) {
+    let str = terminal.innerText;
+    terminal.innerText = str.slice(0, -1);
+    terminal.innerText += '\r';
+}
