@@ -10,6 +10,7 @@ html, body {
     background-color: var(--bg_color);
     color: var(--main_color);
 }
+
 h5{
     color: green;
     margin-top: 0px;
@@ -40,7 +41,7 @@ button{
 }
 
 /* Show the button on screens smaller than 768px wide (typical breakpoint for tablets and below) */
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 1024px) {
     .mobile-only {
         display: block;
     }

@@ -9,12 +9,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
     socket.onmessage = (event) => {
         console.log("Message received: ", event.data);
-        let str = terminal.innerText;
-        terminal.innerText = str.slice(0, -1);
-        terminal.innerText += event.data + '\r';
-        terminal.scrollTop = terminal.scrollHeight;
-        // add cursor to end
-        addCursor(terminal);
+        if (event.data == "clear"){
+            terminal.innerText = "";
+            // add cursor to end
+            addCursor(terminal);
+        }
+        else if (event.data == "exit"){
+            console.log("bye!");
+            location.reload();
+        }
+        else{
+            let str = terminal.innerText;
+            terminal.innerText = str.slice(0, -1);
+            terminal.innerText += event.data + '\r';
+            terminal.scrollTop = terminal.scrollHeight;
+            // add cursor to end
+            addCursor(terminal);
+        }
+
     };
 
     socket.onclose = function(event) {
@@ -40,9 +52,6 @@ document.addEventListener("DOMContentLoaded", function() {
             terminal.innerText = str.slice(0, -1);
             terminal.innerText += '\r';
             socket.send(command);
-            if (command == "clear"){
-                terminal.innerText = "";
-            }
             addCursor(terminal);
             command = "";
         }
