@@ -127,7 +127,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     await websocket.send_text(f"{target_dir} not found or not a directory!\n")
 
-            elif data == "cwd":
+            elif command_list[0] == "cwd":
                 await websocket.send_text(f"Current dir: {session.current_dir}\n")
 
             # Advanced commands
