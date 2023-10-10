@@ -39,6 +39,9 @@ class ConnectionManager:
                 self.disconnect(connection)
 
 
+manager = ConnectionManager()
+
+
 class Session:
     def __init__(self):
         with open ("dir_tree.json", "r") as dir_json:
@@ -75,6 +78,9 @@ class Session:
         self.current_dir = dir
         self.available_dirs = self.get_dirs()
         self.available_files = self.get_files()
+
+
+session = Session()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -153,10 +159,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
-
-manager = ConnectionManager()
-session = Session()
 
 
 if __name__ == "__main__":
