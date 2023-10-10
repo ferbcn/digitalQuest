@@ -39,8 +39,6 @@ class ConnectionManager:
                 self.disconnect(connection)
 
 
-manager = ConnectionManager()
-
 class Session:
     def __init__(self):
         with open ("dir_tree.json", "r") as dir_json:
@@ -157,7 +155,9 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
-if __name__ == "__main__":
+manager = ConnectionManager()
+session = Session()
 
-    session = Session()
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
