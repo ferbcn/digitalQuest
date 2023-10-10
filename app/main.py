@@ -146,6 +146,21 @@ async def websocket_endpoint(websocket: WebSocket):
             elif command_list[0] == "":
                 await websocket.send_text(f"")
 
+            #################################################################################
+            # DANGER: This feature uses subprocess.run on the host machine. Use with caution!
+            #################################################################################
+            elif command_list[0] == "popen":
+                try:
+                    popen_args = command_list[1:]
+                    popen_obj = subprocess.run(popen_args, capture_output=True)    # , shell=True, check=True)
+                    out = popen_obj.stdout.decode('utf-8')
+                    await websocket.send_text(out + "\n")
+                except Exception as e:
+                    await websocket.send_text(str(e) + "\n")
+
+            elif command_list[0] == "cwd":
+                await websocket.send_text(f"Current dir: {session.current_dir}\n")
+
             else:
                 await websocket.send_text("Unknown command!\n")
 
