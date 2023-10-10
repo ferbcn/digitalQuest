@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", function() {
         // Special commands received from server
         if (event.data == "clear"){
             terminal.innerText = "";
-            // add cursor to end
             addCursor(terminal);
         }
         else if (event.data == "exit"){
@@ -23,8 +22,8 @@ document.addEventListener("DOMContentLoaded", function() {
         else{
             let str = terminal.innerText;
             terminal.innerText = str.slice(0, -2);
-            terminal.innerText += event.data + '\r';
-            // add cursor to end
+            terminal.innerText += event.data;
+            terminal.innerText += '$ '
             addCursor(terminal);
             // scroll to bottom of <div>
             terminal.scrollTop = terminal.scrollHeight;
@@ -33,15 +32,15 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     socket.onclose = function(event) {
-        terminal.innerText = 'Connection lost';
+        terminal.innerText = 'Connection lost!';
     };
 
     socket.onerror = function(error) {
-        terminal.innerText = `Error: ${error.message}`;
+        terminal.innerText = 'Error: ${error.message}';
     };
 
     socket.onopen = function(event) {
-        terminal.innerText = 'Connection established!' + '\r';
+        terminal.innerText = 'Connection established!' + '\n$ ';
         //socket.send("ping");
         addCursor(terminal);
     };
@@ -114,12 +113,12 @@ document.addEventListener("DOMContentLoaded", function() {
 function addCursor (terminal) {
     let spanElement = document.createElement("span");
     spanElement.id = "cursor";
-    spanElement.textContent = "|";
+    spanElement.textContent = "█"; //█
     terminal.appendChild(spanElement);
 }
 
 function newLine (terminal) {
     let str = terminal.innerText;
     terminal.innerText = str.slice(0, -1);
-    terminal.innerText += '\r';
+    terminal.innerText += '\n';
 }
