@@ -1,0 +1,6 @@
+{
+  "/": {"parent_dir": "/", "content": [{"name": "file1", "type": "file"}, {"name": "dir1", "type": "dir"}]},
+  "dir1": {"parent_dir": "/", "content": [{"name": "file2", "type": "file"}, {"name": "file3", "type": "file"},
+                                            {"name": "dir2", "type": "dir"}]},
+  "dir2": {"parent_dir": "dir1", "content": [{"name": "file4", "type": "file"}, {"name": "file5", "type": "file"}]}
+}

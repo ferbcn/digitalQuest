@@ -31,41 +31,29 @@ class ConnectionManager:
 
     async def broadcast(self, data: str):
         for connection in self.active_connections:
-            #print("Sendig JSON data:", data)
             try:
                 await connection.send_text(data)
             except WebSocketDisconnect:
                 self.disconnect(connection)
 
+
 class Session:
     def __init__(self):
-        self.dir_tree = {
-    "/": {"parent_dir": "/", "content":
-        [{"name": "file1", "type": "file"},
-         {"name": "dir1", "type": "dir"}]},
-    "dir1": {"parent_dir": "/", "content": [{"name": "file2", "type": "file"}, {"name": "file3", "type": "file"},
-                                            {"name": "dir2", "type": "dir"}]},
-    "dir2": {"parent_dir": "dir1", "content": [{"name": "file4", "type": "file"}, {"name": "file5", "type": "file"}]}
-    }
-
-        self.files = {
-    "file1": {"content": {"data": "This is a test: file1! This is a test: file1! This is a test: file1! "
-                                  "This is a test: file1!", "owner": "root"}},
-    "file2": {"content": {"data": "This is a test: file2!", "owner": "guest"}},
-    "file3": {"content": {"data": "This is a test: file3!", "owner": "root"}},
-    "file4": {"content": {"data": "This is a test: file4!", "owner": "root"}},
-    "file5": {"content": {"data": "This is a test: file5!", "owner": "root"}},
-}
-
+        with open ("dir_tree.json", "r") as dir_json:
+            self.dir_tree = json.load(dir_json)
+        with open ("files.json", "r") as files_json:
+            self.files = json.load(files_json)
         self.current_dir = "/"
         self.current_user = "root"
         self.available_dirs = []
         self.available_files = []
+
     def get_all(self):
         output = ""
         for item in self.dir_tree.get(self.current_dir).get("content"):
             output += item.get("name") + " / " + item.get("type") + "\n"
         return output
+
     def get_dirs(self):
         available_dirs = [item.get("name") for item in self.dir_tree.get(self.current_dir).get("content") if
                           item.get("type") == "dir"]
@@ -98,13 +86,12 @@ def index(request: Request):
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        #available_dirs = session.get_dirs()
-        #available_files = session.get_files()
         session.set_current_dir("/")
         # await for messages and send messages
         while True:
             data = await websocket.receive_text()
             command_list = data.split(" ")
+
             # Test massages
             if command_list[0] == "ping":
                 await websocket.send_text("pong\n")
