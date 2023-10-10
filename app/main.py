@@ -44,9 +44,9 @@ manager = ConnectionManager()
 
 class Session:
     def __init__(self):
-        with open ("dir_tree.json", "r") as dir_json:
+        with open("static/dir_tree.json", "r") as dir_json:
             self.dir_tree = json.load(dir_json)
-        with open ("files.json", "r") as files_json:
+        with open("static/files.json", "r") as files_json:
             self.files = json.load(files_json)
         self.current_dir = "/"
         self.current_user = "root"
