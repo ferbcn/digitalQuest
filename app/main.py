@@ -1,6 +1,4 @@
-import time
 import json
-import subprocess
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -139,16 +137,19 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(f"Current dir: {session.current_dir}\n")
 
             # Advanced commands
-            elif command_list[0] == "cat" and len(command_list) > 1:
-                target_file = command_list[1]
-                if target_file in session.available_files:
-                    file = session.files.get(target_file).get("content")
-                    if file.get("owner") == session.current_user:
-                        await websocket.send_text(file.get("data") + "\n")
+            elif command_list[0] == "cat":
+                if len(command_list) > 1:
+                    target_file = command_list[1]
+                    if target_file in session.available_files:
+                        file = session.files.get(target_file).get("content")
+                        if file.get("owner") == session.current_user:
+                            await websocket.send_text(file.get("data") + "\n")
+                        else:
+                            await websocket.send_text("Not authorized! \n")
                     else:
-                        await websocket.send_text("Not authorized! \n")
+                        await websocket.send_text(f"{target_file} not found!\n")
                 else:
-                    await websocket.send_text(f"{target_file} not found!\n")
+                    await websocket.send_text(f"Usage: 'cat [file]'\n")
 
             # Non commands
             elif command_list[0] == "":

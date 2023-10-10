@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const data_array = event.data.split(" ");
 
         if (data_array[0] == "conninfo"){
+            document.getElementById("conn-count").innerText = data_array[1];
         }
 
         else if (event.data == "clear"){
@@ -77,6 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
             terminal.innerText = slice_str;
             command = command.slice(0, -1);
             addCursor(terminal);
+
         }
         else{
             command += key;
