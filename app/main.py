@@ -25,8 +25,10 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        await self.broadcast("conninfo " + str(len(self.active_connections)))
 
     def disconnect(self, websocket: WebSocket):
+        # await self.broadcast("conninfo " + str(len(self.active_connections)))
         self.active_connections.remove(websocket)
 
     async def broadcast(self, data: str):

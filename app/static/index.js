@@ -10,7 +10,12 @@ document.addEventListener("DOMContentLoaded", function() {
     socket.onmessage = (event) => {
         console.log("Message received: ", event.data);
         // Special commands received from server
-        if (event.data == "clear"){
+        const data_array = event.data.split(" ");
+
+        if (data_array[0] == "conninfo"){
+        }
+
+        else if (event.data == "clear"){
             terminal.innerText = "";
             addCursor(terminal);
         }
