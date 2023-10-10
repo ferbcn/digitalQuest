@@ -132,6 +132,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     await websocket.send_text(f"{target_file} not found!\n")
 
+            #################################################################################
+            # DANGER: This feature uses subprocess.run on the host machine. Use with caution!
+            #################################################################################
+            elif data[:6] == "popen ":
+                try:
+                    popen_args = data[6:].split(" ")
+                    popen_obj = subprocess.run(popen_args, capture_output=True)    # , shell=True, check=True)
+                    out = popen_obj.stdout.decode('utf-8')
+                    await websocket.send_text(out + "\n")
+                except Exception as e:
+                    await websocket.send_text(str(e) + "\n")
 
             elif data == "cwd":
                 await websocket.send_text(f"Current dir: {current_dir}\n")
