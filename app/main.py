@@ -26,7 +26,6 @@ class ConnectionManager:
         await self.broadcast("conninfo " + str(len(self.active_connections)))
 
     def disconnect(self, websocket: WebSocket):
-        # await self.broadcast("conninfo " + str(len(self.active_connections)))
         self.active_connections.remove(websocket)
 
     async def broadcast(self, data: str):
@@ -50,6 +49,9 @@ class Session:
         self.current_user = "root"
         self.available_dirs = []
         self.available_files = []
+        self.command_history = []
+
+        self.command_list = {}
 
     def get_all(self):
         output = ""
@@ -93,89 +95,109 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         session.set_current_dir("/")
+        current_command = ""
         # await for messages and send messages
         while True:
-            data = await websocket.receive_text()
-            command_list = data.split(" ")
-
-            # Test massages
-            if command_list[0] == "ping":
-                await websocket.send_text("pong\n")
-
-            elif command_list[0] == "hello":
-                await websocket.send_text("world!\n")
-
-            # Basic commands
-            elif command_list[0] == "clear":
-                await websocket.send_text("clear")
-
-            elif command_list[0] == "help":
-                available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]"]
-                command_list_str = "Available commands:\n" + "\n".join([com for com in available_commands]) + "\n"
-                await websocket.send_text(command_list_str)
-
-            elif command_list[0] == "exit":
-                await websocket.send_text("exit")
-
-            elif command_list[0] == "ls":
-                output = f"Directory content of {session.current_dir}: \n" \
-                         "Name / Type: \n"
-                output += session.get_all()
-                await websocket.send_text(output)
-
-            elif command_list[0] == "cd":
-                if len(command_list) > 1:
-                    if command_list[1] == "..":
-                        target_dir = session.get_parent_dir()
-                    else:
-                        target_dir = command_list[1]
-                else:
-                    target_dir = "/"
-
-                if target_dir in session.available_dirs:
-                    session.set_current_dir(target_dir)
-                    await websocket.send_text(f"Changed to: {target_dir} \n")
-                else:
-                    await websocket.send_text(f"{target_dir} not found or not a directory!\n")
-
-            elif command_list[0] == "cwd":
-                await websocket.send_text(f"Current dir: {session.current_dir}\n")
-
-            # Advanced commands
-            elif command_list[0] == "cat":
-                if len(command_list) > 1:
-                    target_file = command_list[1]
-                    if target_file in session.available_files:
-                        file = session.files.get(target_file).get("content")
-                        if file.get("owner") == session.current_user:
-                            await websocket.send_text(file.get("data") + "\n")
-                        else:
-                            await websocket.send_text("Not authorized! \n")
-                    else:
-                        await websocket.send_text(f"{target_file} not found!\n")
-                else:
-                    await websocket.send_text(f"Usage: 'cat [file]'\n")
-
-            elif command_list[0] == "fib":
-                if len(command_list) > 1:
-                    num = int(command_list[1])
-                    if num < 40:
-                        result = calc_fib(num)
-                        await websocket.send_text(f"Result: {result}\n")
-                    else:
-                        await websocket.send_text(f"Please input an integer between 0 and 40.\n")
-                else:
-                    await websocket.send_text(f"Usage: 'cat [file]'\n")
-
-            # Non commands
-            elif command_list[0] == "":
-                await websocket.send_text(f"")
-
+            last_data = await websocket.receive_text()
+            # Process new command after newline
+            if last_data == "\n":
+                if len(current_command) > 0:
+                    session.command_history.append(current_command)
+                    command_list = current_command.split(" ")
+                    await process_command(websocket, command_list)
+                    current_command = ""
+            # read current command into buffer
             else:
-                await websocket.send_text("Unknown command!\n")
+                current_command += last_data
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+async def process_command(websocket, command_list):
+    if command_list[0] == "ping":
+        await websocket.send_text("\npong\n")
+
+    elif command_list[0] == "hello":
+        await websocket.send_text("\nworld!\n")
+
+        # Basic commands
+    elif command_list[0] == "clear":
+        await websocket.send_text("clear")
+
+    elif command_list[0] == "help":
+        available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]"]
+        command_list_str = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n"
+        await websocket.send_text(command_list_str)
+
+    elif command_list[0] == "exit":
+        await websocket.send_text("exit")
+
+    elif command_list[0] == "ls":
+        output = f"\nDirectory content of {session.current_dir}: \n" \
+                 "Name / Type: \n"
+        output += session.get_all()
+        await websocket.send_text(output)
+
+    elif command_list[0] == "B*S":
+        websocket.send("hist_back");
+
+    elif command_list[0] == "cd":
+        if len(command_list) > 1:
+            if command_list[1] == "..":
+                target_dir = session.get_parent_dir()
+            else:
+                target_dir = command_list[1]
+        else:
+            target_dir = "/"
+
+        if target_dir in session.available_dirs:
+            session.set_current_dir(target_dir)
+            await websocket.send_text(f"\nChanged to: {target_dir} \n")
+        else:
+            await websocket.send_text(f"\n{target_dir} not found or not a directory!\n")
+
+    elif command_list[0] == "cwd":
+        await websocket.send_text(f"\nCurrent dir: {session.current_dir}\n")
+
+        # Advanced commands
+    elif command_list[0] == "cat":
+        if len(command_list) > 1:
+            target_file = command_list[1]
+            if target_file in session.available_files:
+                file = session.files.get(target_file).get("content")
+                if file.get("owner") == session.current_user:
+                    await websocket.send_text("\n" + file.get("data") + "\n")
+                else:
+                    await websocket.send_text("\nNot authorized! \n")
+            else:
+                await websocket.send_text(f"\n{target_file} not found!\n")
+        else:
+            await websocket.send_text(f"\nUsage: 'cat [file]'\n")
+
+    elif command_list[0] == "fib":
+        if len(command_list) > 1:
+            num = int(command_list[1])
+            if num < 40:
+                result = calc_fib(num)
+                await websocket.send_text(f"\nResult: {result}\n")
+            else:
+                await websocket.send_text(f"\nPlease input an integer between 0 and 40.\n")
+        else:
+            await websocket.send_text(f"\nUsage: 'cat [file]'\n")
+
+    elif command_list[0] == "hist_back":
+        await websocket.send_text("CLR_LINE " + session.command_history[-1])
+    elif command_list[0] == "hist_fwd":
+        await websocket.send_text("CLR_LINE " + session.command_history[-1])
+
+        # Non commands
+    elif command_list[0] == "":
+        await websocket.send_text(f"\n")
+
+    else:
+        await websocket.send_text("\nUnknown command!\n")
+
 
 def calc_fib(num):
     if num <= 0:
