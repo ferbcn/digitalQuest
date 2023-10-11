@@ -74,6 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         else if (key === "Backspace") {
             let str = terminal.innerText;
+            //console.log(command, command.length);
             slice_str = str.slice(0, -2);
             terminal.innerText = slice_str;
             command = command.slice(0, -1);

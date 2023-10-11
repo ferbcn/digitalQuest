@@ -101,23 +101,28 @@ async def websocket_endpoint(websocket: WebSocket):
             # Test massages
             if command_list[0] == "ping":
                 await websocket.send_text("pong\n")
+
             elif command_list[0] == "hello":
                 await websocket.send_text("world!\n")
 
             # Basic commands
             elif command_list[0] == "clear":
                 await websocket.send_text("clear")
+
             elif command_list[0] == "help":
                 available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]"]
                 command_list_str = "Available commands:\n" + "\n".join([com for com in available_commands]) + "\n"
                 await websocket.send_text(command_list_str)
+
             elif command_list[0] == "exit":
                 await websocket.send_text("exit")
+
             elif command_list[0] == "ls":
                 output = f"Directory content of {session.current_dir}: \n" \
                          "Name / Type: \n"
                 output += session.get_all()
                 await websocket.send_text(output)
+
             elif command_list[0] == "cd":
                 if len(command_list) > 1:
                     if command_list[1] == "..":
@@ -151,6 +156,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     await websocket.send_text(f"Usage: 'cat [file]'\n")
 
+            elif command_list[0] == "fib":
+                if len(command_list) > 1:
+                    num = int(command_list[1])
+                    if num < 40:
+                        result = calc_fib(num)
+                        await websocket.send_text(f"Result: {result}\n")
+                    else:
+                        await websocket.send_text(f"Please input an integer between 0 and 40.\n")
+                else:
+                    await websocket.send_text(f"Usage: 'cat [file]'\n")
+
             # Non commands
             elif command_list[0] == "":
                 await websocket.send_text(f"")
@@ -160,6 +176,14 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+def calc_fib(num):
+    if num <= 0:
+        return 0
+    elif num <= 1:
+        return 1
+    else:
+        return calc_fib(num-1) + calc_fib(num-2)
 
 
 if __name__ == "__main__":
