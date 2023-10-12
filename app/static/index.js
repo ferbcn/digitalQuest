@@ -11,26 +11,27 @@ document.addEventListener("DOMContentLoaded", function() {
     socket.onmessage = (event) => {
 
         const all_data = event.data;
-        console.log("Message received: ", all_data);
+        //console.log("Message received: ", all_data);
 
         // Special commands received from server
-        const data_array = event.data.split(" ");
-        // console.log(data_array);
-        if (data_array[0] == "conninfo"){
-            document.getElementById("conn-count").innerText = data_array[1];
+        const command_array = event.data.split(" ");
+        //console.log(command_array);
+        
+        if (command_array[0] == "conninfo"){
+            document.getElementById("conn-count").innerText = command_array[1];
         }
 
-        else if (data_array[0] == "clear"){
+        else if (command_array[0] == "clear"){
             terminal.innerText = "$";
             addCursor(terminal);
         }
-        else if (data_array[0] == "exit"){
+        else if (command_array[0] == "exit"){
             console.log("bye!");
             location.reload();
         }
-        else if (data_array[0] == "hist"){
-            let new_comm = data_array[1];
-            // terminal.innerText = terminal.innerText.split("$").slice(0, -1); //=
+        else if (command_array[0] == "hist"){
+
+            let new_comm = command_array.slice(1).join(" ");
             terminal.innerText = terminal.innerText.slice(0, -(1 + prev_comm_length));
             prev_comm_length = new_comm.length;
             terminal.innerText += new_comm;
@@ -40,10 +41,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // default behaviour: print text received from server
         else{
             prev_comm_length = 0;
-            let str = terminal.innerText;
-            terminal.innerText = str.slice(0, -2);
+            terminal.innerText = terminal.innerText.slice(0, -1);
             terminal.innerText += all_data;
-            terminal.innerText += '$'
             addCursor(terminal);
             // scroll to bottom of <div>
             terminal.scrollTop = terminal.scrollHeight;
@@ -66,13 +65,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     document.addEventListener("keydown", (event) => {
+
         // console.log(event);
         const key = event.key;
 
         if (key === "Enter") {
-            terminal.innerText = terminal.innerText.slice(0, -1);
-            terminal.innerText += "\n$";
-            addCursor(terminal);
             socket.send("\n");
             terminal.scrollTop = terminal.scrollHeight;
         }
@@ -97,21 +94,16 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         else if (key === "ArrowUp") {
-                socket.send("<<<bck>>>");
-            }
+            event.preventDefault();
+            socket.send("<<<bck>>>");
+        }
         else if (key === "ArrowDown") {
-                socket.send("<<<fwd>>>");
-            }
+            event.preventDefault();
+            socket.send("<<<fwd>>>");
+        }
 
-        // Default behaviour: read char into command buffer and print char to screen
         else {
             socket.send(key);
-            terminal.innerText = terminal.innerText.slice(0, -1);
-            if (terminal.innerText.split("$").slice(-1).length > 60){
-                newLine(terminal)
-            }
-            terminal.innerText += key;
-            addCursor(terminal);
         }
 
     });
@@ -143,10 +135,4 @@ function addCursor (terminal) {
     spanElement.id = "cursor";
     spanElement.textContent = "█"; //█
     terminal.appendChild(spanElement);
-}
-
-function newLine (terminal) {
-    let str = terminal.innerText;
-    terminal.innerText = str.slice(0, -1);
-    terminal.innerText += '\n';
 }

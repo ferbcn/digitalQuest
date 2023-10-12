@@ -105,8 +105,10 @@ async def websocket_endpoint(websocket: WebSocket):
             if last_data == "<<<bs>>>":
                 command_buffer = command_buffer[:-1]
             elif last_data == "<<<bck>>>":
-                command_buffer = session.command_history[-command_history_pos];
-                await websocket.send_text("hist" + " " + command_buffer);
+                if len(session.command_history) > 0:
+                    command_buffer = session.command_history[-command_history_pos]
+                    await websocket.send_text("hist" + " " + command_buffer)
+                    print(session.command_history, command_buffer)
                 if len(session.command_history) > command_history_pos:
                     command_history_pos += 1
             elif last_data == "<<<fwd>>>":
@@ -119,10 +121,13 @@ async def websocket_endpoint(websocket: WebSocket):
                     command_list = command_buffer.split(" ")
                     await process_command(websocket, command_list)
                     command_buffer = ""
+                else:
+                    await websocket.send_text(f"\n$")
 
             # Read next char into command buffer
             else:
                 command_buffer += last_data
+                await websocket.send_text(last_data)
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -131,10 +136,10 @@ async def websocket_endpoint(websocket: WebSocket):
 async def process_command(websocket, command_list):
     print("Commands and args: ", command_list)
     if command_list[0] == "ping":
-        await websocket.send_text("pong\n")
+        await websocket.send_text("\npong\n$")
 
     elif command_list[0] == "hello":
-        await websocket.send_text("world!\n")
+        await websocket.send_text("\nworld!\n$")
 
         # Basic commands
     elif command_list[0] == "clear":
@@ -142,16 +147,16 @@ async def process_command(websocket, command_list):
 
     elif command_list[0] == "help":
         available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]"]
-        command_list_str = "Available commands:\n" + "\n".join([com for com in available_commands]) + "\n"
+        command_list_str = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
         await websocket.send_text(command_list_str)
 
     elif command_list[0] == "exit":
         await websocket.send_text("exit")
 
     elif command_list[0] == "ls":
-        output = f"Directory content of {session.current_dir}: \n" \
+        output = f"\nDirectory content of {session.current_dir}: \n" \
                  "Name / Type: \n"
-        output += session.get_all()
+        output += session.get_all() + "$"
         await websocket.send_text(output)
 
     elif command_list[0] == "cd":
@@ -165,12 +170,12 @@ async def process_command(websocket, command_list):
 
         if target_dir in session.available_dirs:
             session.set_current_dir(target_dir)
-            await websocket.send_text(f"Changed to: {target_dir} \n")
+            await websocket.send_text(f"\nChanged to: {target_dir} \n$")
         else:
-            await websocket.send_text(f"{target_dir} not found or not a directory!\n")
+            await websocket.send_text(f"\n{target_dir} not found or not a directory!\n")
 
     elif command_list[0] == "cwd":
-        await websocket.send_text(f"Current dir: {session.current_dir}\n")
+        await websocket.send_text(f"\nCurrent dir: {session.current_dir}\n$")
 
     # Advanced commands
     elif command_list[0] == "cat":
@@ -179,31 +184,28 @@ async def process_command(websocket, command_list):
             if target_file in session.available_files:
                 file = session.files.get(target_file).get("content")
                 if file.get("owner") == session.current_user:
-                    await websocket.send_text(file.get("data") + "\n")
+                    await websocket.send_text("\n" + file.get("data") + "\n$")
                 else:
-                    await websocket.send_text("Not authorized! \n")
+                    await websocket.send_text("\nNot authorized! \n$")
             else:
-                await websocket.send_text(f"{target_file} not found!\n")
+                await websocket.send_text(f"\n{target_file} not found!\n$")
         else:
-            await websocket.send_text(f"Usage: 'cat [file]'\n")
+            await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
 
     elif command_list[0] == "fib":
         if len(command_list) > 1:
             num = int(command_list[1])
             if num < 40:
                 result = calc_fib(num)
-                await websocket.send_text(f"Result: {result}\n")
+                await websocket.send_text(f"\nResult: {result}\n$")
             else:
-                await websocket.send_text(f"Please input an integer between 0 and 40.\n")
+                await websocket.send_text(f"\nPlease input an integer between 0 and 40.\n$")
         else:
-            await websocket.send_text(f"Usage: 'cat [file]'\n")
+            await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
 
     # Non commands
-    elif command_list[0] == "":
-        pass # await websocket.send_text(f"\n")
-
     else:
-        await websocket.send_text("Unknown command!\n")
+        await websocket.send_text("\nUnknown command!\n$")
 
 
 def calc_fib(num):
