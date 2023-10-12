@@ -108,16 +108,22 @@ async def websocket_endpoint(websocket: WebSocket):
                 if len(session.command_history) > 0:
                     command_buffer = session.command_history[-command_history_pos]
                     await websocket.send_text("hist" + " " + command_buffer)
-                    print(session.command_history, command_buffer)
+                    print("History:", session.command_history, command_buffer)
                 if len(session.command_history) > command_history_pos:
                     command_history_pos += 1
             elif last_data == "<<<fwd>>>":
-                print("Command history FWD not implemented!)")
+                if command_history_pos > 1:
+                    command_history_pos -= 1
+                if command_history_pos >= 1:
+                    command_buffer = session.command_history[-command_history_pos]
+                    await websocket.send_text("hist" + " " + command_buffer)
+                    print("History:", session.command_history, command_buffer)
 
             # Process new command after newline
             elif last_data == "\n":
                 if len(command_buffer) > 0:
                     session.command_history.append(command_buffer)
+                    command_history_pos = 1
                     command_list = command_buffer.split(" ")
                     await process_command(websocket, command_list)
                     command_buffer = ""
@@ -151,6 +157,7 @@ async def process_command(websocket, command_list):
         await websocket.send_text(command_list_str)
 
     elif command_list[0] == "exit":
+        session.command_history = []
         await websocket.send_text("exit")
 
     elif command_list[0] == "ls":
