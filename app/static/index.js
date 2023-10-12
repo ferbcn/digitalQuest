@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
     socket.onmessage = (event) => {
 
         const all_data = event.data;
-        //console.log("Message received: ", all_data);
+        console.log("Message received: ", all_data);
 
         // Special commands received from server
         const command_array = event.data.split(" ");
@@ -21,16 +21,15 @@ document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("conn-count").innerText = command_array[1];
         }
 
-        else if (command_array[0] == "clear"){
+        else if (all_data == "clear"){
             terminal.innerText = "$";
             addCursor(terminal);
         }
-        else if (command_array[0] == "exit"){
+        else if (all_data == "exit"){
             console.log("bye!");
             location.reload();
         }
         else if (command_array[0] == "hist"){
-
             let new_comm = command_array.slice(1).join(" ");
             terminal.innerText = terminal.innerText.slice(0, -(1 + prev_comm_length));
             prev_comm_length = new_comm.length;
@@ -42,7 +41,16 @@ document.addEventListener("DOMContentLoaded", function() {
         else{
             prev_comm_length = 0;
             terminal.innerText = terminal.innerText.slice(0, -1);
-            terminal.innerText += all_data;
+            let new_str = "";
+            for (let i=0; i<all_data.length; i++){
+                if (all_data[i] == " "){
+                    new_str += " ";
+                }
+                else{
+                    new_str += all_data[i];
+                }
+            }
+            terminal.innerText += new_str;
             addCursor(terminal);
             // scroll to bottom of <div>
             terminal.scrollTop = terminal.scrollHeight;
