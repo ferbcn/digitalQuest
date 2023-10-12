@@ -215,10 +215,12 @@ async def process_command(websocket, command_list):
     elif command_list[0] == "ascii-art":
         text = ""
         with open("static/ascii-art.txt", "r") as text_file:
+            await websocket.send_text("\n")
             for line in text_file:
-                text += line
-        print(text)
-        await websocket.send_text(f"\n{text}\n$")
+                #text += line
+                await websocket.send_text(line)
+        #print(text)
+        #await websocket.send_text(f"\n{text}\n$")
 
     elif command_list[0] == "random":
         await websocket.send_text(f"\n")
