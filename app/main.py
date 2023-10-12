@@ -1,4 +1,6 @@
 import json
+import random
+
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -209,6 +211,23 @@ async def process_command(websocket, command_list):
                 await websocket.send_text(f"\nPlease input an integer between 0 and 40.\n$")
         else:
             await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
+
+    elif command_list[0] == "ascii-art":
+        text = ""
+        with open("static/ascii-art.txt", "r") as text_file:
+            for line in text_file:
+                text += line
+        print(text)
+        await websocket.send_text(f"\n{text}\n$")
+
+    elif command_list[0] == "random":
+        await websocket.send_text(f"\n")
+        for p in range(50):
+            line = ""
+            for i in range(59):
+                line += chr(random.randint(64, 128))
+            await websocket.send_text(f"{line}\n")
+        await websocket.send_text(f"$")
 
     # Non commands
     else:
