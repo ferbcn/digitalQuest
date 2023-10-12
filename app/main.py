@@ -39,7 +39,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-class Session:
+class FileSystem:
     def __init__(self):
         with open("static/dir_tree.json", "r") as dir_json:
             self.dir_tree = json.load(dir_json)
@@ -80,7 +80,7 @@ class Session:
         self.available_files = self.get_files()
 
 
-session = Session()
+my_system = FileSystem()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -94,7 +94,7 @@ def index(request: Request):
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        session.set_current_dir("/")
+        my_system.set_current_dir("/")
         command_buffer = ""
         command_history_pos = 1
         # await for messages and send messages
@@ -105,24 +105,24 @@ async def websocket_endpoint(websocket: WebSocket):
             if last_data == "<<<bs>>>":
                 command_buffer = command_buffer[:-1]
             elif last_data == "<<<bck>>>":
-                if len(session.command_history) > 0:
-                    command_buffer = session.command_history[-command_history_pos]
+                if len(my_system.command_history) > 0:
+                    command_buffer = my_system.command_history[-command_history_pos]
                     await websocket.send_text("hist" + " " + command_buffer)
-                    print("History:", session.command_history, command_buffer)
-                if len(session.command_history) > command_history_pos:
+                    print("History:", my_system.command_history, command_buffer)
+                if len(my_system.command_history) > command_history_pos:
                     command_history_pos += 1
             elif last_data == "<<<fwd>>>":
                 if command_history_pos > 1:
                     command_history_pos -= 1
                 if command_history_pos >= 1:
-                    command_buffer = session.command_history[-command_history_pos]
+                    command_buffer = my_system.command_history[-command_history_pos]
                     await websocket.send_text("hist" + " " + command_buffer)
-                    print("History:", session.command_history, command_buffer)
+                    print("History:", my_system.command_history, command_buffer)
 
             # Process new command after newline
             elif last_data == "\n":
                 if len(command_buffer) > 0:
-                    session.command_history.append(command_buffer)
+                    my_system.command_history.append(command_buffer)
                     command_history_pos = 1
                     command_list = command_buffer.split(" ")
                     await process_command(websocket, command_list)
@@ -157,40 +157,40 @@ async def process_command(websocket, command_list):
         await websocket.send_text(command_list_str)
 
     elif command_list[0] == "exit":
-        session.command_history = []
+        my_system.command_history = []
         await websocket.send_text("exit")
 
     elif command_list[0] == "ls":
-        output = f"\nDirectory content of {session.current_dir}: \n" \
+        output = f"\nDirectory content of {my_system.current_dir}: \n" \
                  "Name / Type: \n"
-        output += session.get_all() + "$"
+        output += my_system.get_all() + "$"
         await websocket.send_text(output)
 
     elif command_list[0] == "cd":
         if len(command_list) > 1:
             if command_list[1] == "..":
-                target_dir = session.get_parent_dir()
+                target_dir = my_system.get_parent_dir()
             else:
                 target_dir = command_list[1]
         else:
             target_dir = "/"
 
-        if target_dir in session.available_dirs:
-            session.set_current_dir(target_dir)
+        if target_dir in my_system.available_dirs:
+            my_system.set_current_dir(target_dir)
             await websocket.send_text(f"\nChanged to: {target_dir} \n$")
         else:
             await websocket.send_text(f"\n{target_dir} not found or not a directory!\n")
 
     elif command_list[0] == "cwd":
-        await websocket.send_text(f"\nCurrent dir: {session.current_dir}\n$")
+        await websocket.send_text(f"\nCurrent dir: {my_system.current_dir}\n$")
 
     # Advanced commands
     elif command_list[0] == "cat":
         if len(command_list) > 1:
             target_file = command_list[1]
-            if target_file in session.available_files:
-                file = session.files.get(target_file).get("content")
-                if file.get("owner") == session.current_user:
+            if target_file in my_system.available_files:
+                file = my_system.files.get(target_file).get("content")
+                if file.get("owner") == my_system.current_user:
                     await websocket.send_text("\n" + file.get("data") + "\n$")
                 else:
                     await websocket.send_text("\nNot authorized! \n$")
