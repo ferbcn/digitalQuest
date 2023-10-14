@@ -5,13 +5,13 @@ document.addEventListener("DOMContentLoaded", function() {
     let terminal = document.getElementById("terminal");
 
     let ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-    let wsUrl = ws_scheme + '://' + window.location.host + "/terminalws"
+    let wsUrl = ws_scheme + '://' + window.location.host + "/terminalws";
     let socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {
 
         const all_data = event.data;
-        console.log("Message received: ", all_data);
+        //console.log("Message received: ", all_data);
 
         // Special commands received from server
         const command_array = event.data.split(" ");
@@ -34,6 +34,12 @@ document.addEventListener("DOMContentLoaded", function() {
             terminal.innerText = terminal.innerText.slice(0, -(1 + prev_comm_length));
             prev_comm_length = new_comm.length;
             terminal.innerText += new_comm;
+            addCursor(terminal);
+        }
+        else if (command_array[0] == "<sp>"){
+            terminal.innerText = terminal.innerText.slice(0, -1);
+            //terminal.innerText += " ";
+            terminal.innerHTML += "&nbsp";
             addCursor(terminal);
         }
 

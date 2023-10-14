@@ -212,13 +212,22 @@ async def process_command(websocket, command_list):
         else:
             await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
 
-    elif command_list[0] == "ascii-art":
-        text = ""
-        with open("static/ascii-art.txt", "r") as text_file:
+    elif command_list[0] == "ascii":
+        filename = "linux.txt"
+        if len(command_list) > 1:
+            if command_list[1] == "girl":
+                filename = "girl.txt"
+            elif command_list[1] == "bikini":
+                filename = "bikini.txt"
+        with open("static/" + filename, "r") as text_file:
             await websocket.send_text("\n")
             for line in text_file:
-                #text += line
-                await websocket.send_text(line)
+                for char in line:
+                    if char == " ":
+                        await websocket.send_text("<sp>")
+                    else:
+                        await websocket.send_text(char)
+            await websocket.send_text("\n$")
         #print(text)
         #await websocket.send_text(f"\n{text}\n$")
 
@@ -246,4 +255,4 @@ def calc_fib(num):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
