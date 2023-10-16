@@ -12,6 +12,9 @@ from typing import List
 
 from starlette.websockets import WebSocketDisconnect
 
+import os
+import openai
+
 app = FastAPI(title='TheDigitalQuest')
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -239,6 +242,21 @@ async def process_command(websocket, command_list):
                 line += chr(random.randint(64, 128))
             await websocket.send_text(f"{line}\n")
         await websocket.send_text(f"$")
+
+    elif command_list[0] == "AI":
+        prompt = " ".join([com for com in command_list[1:]])
+        print(prompt)
+
+        openai.api_key = os.getenv("OPENAI_KEY")
+        response = openai.Completion.create(
+            model="gpt-3.5-turbo-instruct",
+            prompt=prompt,
+            max_tokens=100,
+            temperature=0
+        )
+        answer = response["choices"][0]["text"]
+        await websocket.send_text(f"{answer}\n$")
+
 
     # Non commands
     else:
