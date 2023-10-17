@@ -20,6 +20,7 @@ app = FastAPI(title='TheDigitalQuest')
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+OPENAI_KEY = os.getenv("OPENAI_KEY")
 
 class ConnectionManager:
     def __init__(self):
