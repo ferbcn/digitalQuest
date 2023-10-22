@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let terminal = document.getElementById("terminal");
 
     let ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-    let wsUrl = ws_scheme + '://' + window.location.host + "/ws-console";
+    let wsUrl = ws_scheme + '://' + window.location.host + "/wsconsole";
     let socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {

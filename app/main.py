@@ -96,7 +96,7 @@ def index(request: Request):
 
 
 # Websocket endpoint
-@app.websocket("/ws-console")
+@app.websocket("/wsconsole")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
