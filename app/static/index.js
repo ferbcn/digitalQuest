@@ -5,27 +5,28 @@ document.addEventListener("DOMContentLoaded", function() {
     let terminal = document.getElementById("terminal");
 
     let ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-    let wsUrl = ws_scheme + '://' + window.location.host + "/terminalws";
+    let wsUrl = ws_scheme + '://' + window.location.host + "/ws-console";
     let socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {
 
-        const all_data = event.data;
-        //console.log("Message received: ", all_data);
+        const data_in = event.data;
+        //console.log("Message received: ", data_in);
 
         // Special commands received from server
         const command_array = event.data.split(" ");
         //console.log(command_array);
+
         
         if (command_array[0] == "conninfo"){
             document.getElementById("conn-count").innerText = command_array[1];
         }
 
-        else if (all_data == "clear"){
+        else if (data_in == "clear"){
             terminal.innerText = "$";
             addCursor(terminal);
         }
-        else if (all_data == "exit"){
+        else if (data_in == "exit"){
             console.log("bye!");
             location.reload();
         }
@@ -38,30 +39,25 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         else if (command_array[0] == "<sp>"){
             terminal.innerText = terminal.innerText.slice(0, -1);
-            //terminal.innerText += " ";
             terminal.innerHTML += "&nbsp";
             addCursor(terminal);
         }
 
-        // default behaviour: print text received from server
+        // default behaviour: print chars received from server
         else{
             prev_comm_length = 0;
-            terminal.innerText = terminal.innerText.slice(0, -1);
-            let new_str = "";
-            for (let i=0; i<all_data.length; i++){
-                if (all_data[i] == " "){
-                    new_str += " ";
-                }
-                else{
-                    new_str += all_data[i];
-                }
+            let t = terminal.innerText;
+            if (t.length > 2000){
+                terminal.innerText = "" + data_in;
             }
-            terminal.innerText += new_str;
+            else{
+                terminal.innerText = t.slice(0, -1) + data_in;
+            }
+
             addCursor(terminal);
             // scroll to bottom of <div>
             terminal.scrollTop = terminal.scrollHeight;
         }
-
     };
 
     socket.onclose = function(event) {
@@ -91,10 +87,6 @@ document.addEventListener("DOMContentLoaded", function() {
         else if (key === " ") {
             event.preventDefault();
             socket.send(" ");
-            let str = terminal.innerText;
-            terminal.innerText = str.slice(0, -1);
-            terminal.innerHTML += "&nbsp;";
-            addCursor(terminal);
         }
 
         else if (key === "Shift") {
@@ -130,6 +122,7 @@ document.addEventListener("DOMContentLoaded", function() {
         inputElement.style.visibility = 'hidden'; // hide it again
     });
 
+    // blinking cursor animation
     var cursor = true;
     var speed = 250;
     setInterval(() => {

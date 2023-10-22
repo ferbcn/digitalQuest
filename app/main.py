@@ -96,7 +96,7 @@ def index(request: Request):
 
 
 # Websocket endpoint
-@app.websocket("/terminalws")
+@app.websocket("/ws-console")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
@@ -139,6 +139,8 @@ async def websocket_endpoint(websocket: WebSocket):
             # Read next char into command buffer
             else:
                 command_buffer += last_data
+                if last_data == " ":
+                    await websocket.send_text("<sp>")
                 await websocket.send_text(last_data)
 
     except WebSocketDisconnect:
@@ -147,10 +149,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def process_command(websocket, command_list):
     print("Commands and args: ", command_list)
-    if command_list[0] == "ping":
-        await websocket.send_text("\npong\n$")
 
-    elif command_list[0] == "hello":
+    if command_list[0] == "hello":
         await websocket.send_text("\nworld!\n$")
 
         # Basic commands
@@ -158,7 +158,8 @@ async def process_command(websocket, command_list):
         await websocket.send_text("clear")
 
     elif command_list[0] == "help":
-        available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]"]
+        available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]",
+                              "fib [int]", "rand [int]", "ascii [file]"]
         command_list_str = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
         await websocket.send_text(command_list_str)
 
@@ -232,17 +233,18 @@ async def process_command(websocket, command_list):
                     else:
                         await websocket.send_text(char)
             await websocket.send_text("\n$")
-        #print(text)
-        #await websocket.send_text(f"\n{text}\n$")
 
-    elif command_list[0] == "random":
+    elif command_list[0] == "rand":
+        try:
+            length = int(command_list[1])
+        except Exception:
+            length = 64
+
         await websocket.send_text(f"\n")
-        for p in range(50):
-            line = ""
-            for i in range(59):
-                line += chr(random.randint(64, 128))
-            await websocket.send_text(f"{line}\n")
-        await websocket.send_text(f"$")
+        for i in range(length):
+            c = chr(random.randint(64, 128))
+            await websocket.send_text(f"{c}")
+        await websocket.send_text(f"\n$")
 
     elif command_list[0] == "AI":
         prompt = " ".join([com for com in command_list[1:]])
