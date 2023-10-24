@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
 
-    prev_comm_length = 0; // needed to keep track of how many characters to delete from console
+    var prev_comm_length = 0; // needed to keep track of how many characters to delete from console
+    var chars_in_line = 0; // keep track of number of chars in current line
 
     let terminal = document.getElementById("terminal");
 
@@ -11,47 +12,47 @@ document.addEventListener("DOMContentLoaded", function() {
     socket.onmessage = (event) => {
 
         const data_in = event.data;
-        //console.log("Message received: ", data_in);
+        const jsonData = JSON.parse(data_in);
+        var type = jsonData.type;
+        var content = jsonData.content;
+        // console.log("Message: ", type, content);
 
-        // Special commands received from server
-        const command_array = event.data.split(" ");
-        //console.log(command_array);
-
-        
-        if (command_array[0] == "conninfo"){
-            document.getElementById("conn-count").innerText = command_array[1];
+        if (type == "conn-info"){
+            document.getElementById("conn-count").innerText = content;
         }
 
-        else if (data_in == "clear"){
-            terminal.innerText = "$";
-            addCursor(terminal);
+        else if (type == "system"){
+            if (content == "clear"){
+                terminal.innerText = "$";
+                addCursor(terminal);
+            }
+            else if (content == "exit"){
+                console.log("bye!");
+                location.reload();
+            }
         }
-        else if (data_in == "exit"){
-            console.log("bye!");
-            location.reload();
-        }
-        else if (command_array[0] == "hist"){
-            let new_comm = command_array.slice(1).join(" ");
+
+        else if (type == "history"){
+            let new_comm = content;
             terminal.innerText = terminal.innerText.slice(0, -(1 + prev_comm_length));
             prev_comm_length = new_comm.length;
             terminal.innerText += new_comm;
             addCursor(terminal);
         }
-        else if (command_array[0] == "<sp>"){
-            terminal.innerText = terminal.innerText.slice(0, -1);
-            terminal.innerHTML += "&nbsp";
-            addCursor(terminal);
-        }
 
         // default behaviour: print chars received from server
-        else{
+        else if (type == "text"){
+            terminal.innerText = terminal.innerText.slice(0, -1);
             prev_comm_length = 0;
             let t = terminal.innerText;
-            if (t.length > 2000){
-                terminal.innerText = "" + data_in;
-            }
-            else{
-                terminal.innerText = t.slice(0, -1) + data_in;
+            for (const char of content) {
+                if (char == " "){
+                    terminal.innerHTML += "&nbsp";
+                }
+                else{
+                    terminal.innerText += char;
+                }
+                chars_in_line += 1;
             }
 
             addCursor(terminal);
@@ -80,13 +81,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const key = event.key;
 
         if (key === "Enter") {
+            chars_in_line = 0;
             socket.send("\n");
             terminal.scrollTop = terminal.scrollHeight;
         }
 
         else if (key === " ") {
             event.preventDefault();
-            socket.send(" ");
+            socket.send(key);
         }
 
         else if (key === "Shift") {
@@ -94,18 +96,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         else if (key === "Backspace") {
-            socket.send("<<<bs>>>")
-            terminal.innerText = terminal.innerText.slice(0, -2);
-            addCursor(terminal);
+            if (chars_in_line > 0){
+                chars_in_line -= 1;
+                socket.send("<*bs*>");
+                terminal.innerText = terminal.innerText.slice(0, -2);
+                addCursor(terminal);
+            }
         }
 
         else if (key === "ArrowUp") {
             event.preventDefault();
-            socket.send("<<<bck>>>");
+            socket.send("<*bck*>");
         }
         else if (key === "ArrowDown") {
             event.preventDefault();
-            socket.send("<<<fwd>>>");
+            socket.send("<*fwd*>");
         }
 
         else {

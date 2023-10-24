@@ -22,6 +22,7 @@ templates = Jinja2Templates(directory="templates")
 
 OPENAI_KEY = os.getenv("OPENAI_KEY")
 
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -29,7 +30,8 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        await self.broadcast("conninfo " + str(len(self.active_connections)))
+        json_data = json.dumps({"type": "conn-info", "content": len(self.active_connections)})
+        await self.broadcast(json_data)
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
@@ -107,41 +109,49 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             last_data = await websocket.receive_text()
 
-            # Backspace Operation
-            if last_data == "<<<bs>>>":
+            # Backspace Operation: don't do anything
+            if last_data == "<*bs*>":
                 command_buffer = command_buffer[:-1]
-            elif last_data == "<<<bck>>>":
-                if len(my_system.command_history) > 0:
-                    command_buffer = my_system.command_history[-command_history_pos]
-                    await websocket.send_text("hist" + " " + command_buffer)
-                    print("History:", my_system.command_history, command_buffer)
-                if len(my_system.command_history) > command_history_pos:
-                    command_history_pos += 1
-            elif last_data == "<<<fwd>>>":
-                if command_history_pos > 1:
-                    command_history_pos -= 1
-                if command_history_pos >= 1:
-                    command_buffer = my_system.command_history[-command_history_pos]
-                    await websocket.send_text("hist" + " " + command_buffer)
-                    print("History:", my_system.command_history, command_buffer)
 
-            # Process new command after newline
-            elif last_data == "\n":
-                if len(command_buffer) > 0:
-                    my_system.command_history.append(command_buffer)
-                    command_history_pos = 1
-                    command_list = command_buffer.split(" ")
-                    await process_command(websocket, command_list)
-                    command_buffer = ""
-                else:
-                    await websocket.send_text(f"\n$")
-
-            # Read next char into command buffer
+            # Process Special and Regular commands
             else:
-                command_buffer += last_data
-                if last_data == " ":
-                    await websocket.send_text("<sp>")
-                await websocket.send_text(last_data)
+                # Console History Operations
+                if last_data == "<*bck*>" or last_data == "<*fwd*>":
+                    mes_type = "history"
+                    if last_data == "<*bck*>":
+                        if len(my_system.command_history) > 0:
+                            command_buffer = my_system.command_history[-command_history_pos]
+                        if len(my_system.command_history) > command_history_pos:
+                            command_history_pos += 1
+                    elif last_data == "<*fwd*>":
+                        if command_history_pos > 1:
+                            command_history_pos -= 1
+                        if command_history_pos >= 1:
+                            command_buffer = my_system.command_history[-command_history_pos]
+
+                    mes_object = {"type": mes_type, "content": command_buffer}
+                    print("History:", my_system.command_history, command_buffer)
+
+                # Process new command after newline
+                elif last_data == "\n":
+                    if len(command_buffer) > 0:
+                        my_system.command_history.append(command_buffer)
+                        command_history_pos = 1
+                        command_list = command_buffer.split(" ")
+                        command_buffer = ""
+                        mes_object = await process_command(websocket, command_list)
+                    else:
+                        mes_type = "text"
+                        mes_content = "\n$"
+                        mes_object = {"type": mes_type, "content": mes_content}
+
+                # Read next char into command buffer
+                else:
+                    command_buffer += last_data
+                    # echo character to websocket
+                    mes_object = {"type": "text", "content": last_data}
+
+                await websocket.send_text(json.dumps(mes_object))
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -149,29 +159,32 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def process_command(websocket, command_list):
     print("Commands and args: ", command_list)
+    mes_type = "text" # default message type
 
     if command_list[0] == "hello":
-        await websocket.send_text("\nworld!\n$")
+        # await websocket.send_text("\nworld!\n$")
+        mes_content = "\nworld!\n$"
 
         # Basic commands
     elif command_list[0] == "clear":
-        await websocket.send_text("clear")
+        mes_type = "system"
+        mes_content = "clear"
 
     elif command_list[0] == "help":
         available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]",
                               "fib [int]", "rand [int]", "ascii [file]"]
-        command_list_str = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
-        await websocket.send_text(command_list_str)
+        mes_content = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
+        mes_type = "text"
 
     elif command_list[0] == "exit":
         my_system.command_history = []
-        await websocket.send_text("exit")
+        mes_type = "system"
+        mes_content = "exit"
 
     elif command_list[0] == "ls":
-        output = f"\nDirectory content of {my_system.current_dir}: \n" \
-                 "Name / Type: \n"
-        output += my_system.get_all() + "$"
-        await websocket.send_text(output)
+        mes_content = f"\nDirectory content of {my_system.current_dir}:\n"
+        mes_content += my_system.get_all()
+        mes_content += "\n$"
 
     elif command_list[0] == "cd":
         if len(command_list) > 1:
@@ -184,12 +197,13 @@ async def process_command(websocket, command_list):
 
         if target_dir in my_system.available_dirs:
             my_system.set_current_dir(target_dir)
-            await websocket.send_text(f"\nChanged to: {target_dir} \n$")
+            mes_content = f"\nChanged to: {target_dir} \n$"
         else:
-            await websocket.send_text(f"\n{target_dir} not found or not a directory!\n")
+            mes_content = f"\n{target_dir} not found or not a directory!\n"
 
     elif command_list[0] == "cwd":
-        await websocket.send_text(f"\nCurrent dir: {my_system.current_dir}\n$")
+        mes_type = "text"
+        mes_content = f"\nCurrent dir: {my_system.current_dir}\n$"
 
     # Advanced commands
     elif command_list[0] == "cat":
@@ -198,24 +212,24 @@ async def process_command(websocket, command_list):
             if target_file in my_system.available_files:
                 file = my_system.files.get(target_file).get("content")
                 if file.get("owner") == my_system.current_user:
-                    await websocket.send_text("\n" + file.get("data") + "\n$")
+                    mes_content = "\n" + file.get("data") + "\n$"
                 else:
-                    await websocket.send_text("\nNot authorized! \n$")
+                    mes_content = "\nNot authorized! \n$"
             else:
-                await websocket.send_text(f"\n{target_file} not found!\n$")
+                mes_content = f"\n{target_file} not found!\n$"
         else:
-            await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
+            mes_content = f"\nUsage: 'cat [file]'\n$"
 
     elif command_list[0] == "fib":
         if len(command_list) > 1:
             num = int(command_list[1])
             if num < 40:
                 result = calc_fib(num)
-                await websocket.send_text(f"\nResult: {result}\n$")
+                mes_content = f"\nResult: {result}\n$"
             else:
-                await websocket.send_text(f"\nPlease input an integer between 0 and 40.\n$")
+                mes_content = f"\nPlease input an integer between 0 and 40.\n$"
         else:
-            await websocket.send_text(f"\nUsage: 'cat [file]'\n$")
+            mes_content = f"\nUsage: 'fib [integer number]'\n$"
 
     elif command_list[0] == "ascii":
         filename = "linux.txt"
@@ -225,26 +239,21 @@ async def process_command(websocket, command_list):
             elif command_list[1] == "bikini":
                 filename = "bikini.txt"
         with open("static/" + filename, "r") as text_file:
-            await websocket.send_text("\n")
-            for line in text_file:
-                for char in line:
-                    if char == " ":
-                        await websocket.send_text("<sp>")
-                    else:
-                        await websocket.send_text(char)
-            await websocket.send_text("\n$")
+            mes_content = "\n"
+            mes_content += text_file.read()
+            mes_content += "\n$"
+            print(mes_content)
 
     elif command_list[0] == "rand":
         try:
             length = int(command_list[1])
         except Exception:
             length = 64
-
-        await websocket.send_text(f"\n")
+        mes_content = f"\n$"
+        rand_str = ""
         for i in range(length):
-            c = chr(random.randint(64, 128))
-            await websocket.send_text(f"{c}")
-        await websocket.send_text(f"\n$")
+            rand_str += chr(random.randint(64, 128))
+        mes_content += f"{rand_str}\n$"
 
     elif command_list[0] == "AI":
         prompt = " ".join([com for com in command_list[1:]])
@@ -258,12 +267,14 @@ async def process_command(websocket, command_list):
             temperature=0
         )
         answer = response["choices"][0]["text"]
-        await websocket.send_text(f"{answer}\n$")
-
+        mes_content = f"{answer}\n$"
 
     # Non commands
     else:
-        await websocket.send_text("\nUnknown command!\n$")
+        mes_content = "\nUnknown command!\n$"
+
+    # await websocket.send_text(json.dumps({"type": mes_type, "content": mes_content}))
+    return {"type": mes_type, "content": mes_content}
 
 
 def calc_fib(num):
