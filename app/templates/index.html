@@ -9,17 +9,21 @@
     <title>The Digital Quest</title>
 </head>
 <body>
-    <h3>The Digital Quest</h3>
-    <h5>Level: {{ level }}</h5>
+    <canvas id="matrixCanvas"></canvas>
 
-    <div class="terminal" id="terminal"><span id="cursor">|</span></div>
+    <div id="textCanvas">
+        <h3>My Digital Quest</h3>
 
-    <input id="hiddenInput" style="visibility: hidden;">
+        <div class="terminal" id="terminal"><span id="cursor">|</span></div>
 
-    <div>
-        <h6>Active Connections: <class id="conn-count">Waiting for data...</class></h6>
+        <input id="hiddenInput" style="visibility: hidden;">
+
+        <div>
+            <h6>Active Connections: <class id="conn-count">Waiting for data...</class></h6>
+        </div>
     </div>
 
 
+    <script src="{{ url_for('static', path='rain.js') }}"></script>
 </body>
 </html>

@@ -96,6 +96,10 @@ def index(request: Request):
     current_level = 0
     return templates.TemplateResponse("index.html", {"request": request, "level": current_level})
 
+@app.get("/rain", response_class=HTMLResponse)
+def index(request: Request):
+    current_level = 0
+    return templates.TemplateResponse("rain.html", {"request": request})
 
 # Websocket endpoint
 @app.websocket("/wsconsole")
@@ -109,49 +113,48 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             last_data = await websocket.receive_text()
 
-            # Backspace Operation: don't do anything
+            # Backspace Operation
             if last_data == "<*bs*>":
+                # remove last char from buffer
                 command_buffer = command_buffer[:-1]
+                mes_object = {"type": "system", "content": "nop"}
 
             # Process Special and Regular commands
-            else:
-                # Console History Operations
-                if last_data == "<*bck*>" or last_data == "<*fwd*>":
-                    mes_type = "history"
-                    if last_data == "<*bck*>":
-                        if len(my_system.command_history) > 0:
-                            command_buffer = my_system.command_history[-command_history_pos]
-                        if len(my_system.command_history) > command_history_pos:
-                            command_history_pos += 1
-                    elif last_data == "<*fwd*>":
-                        if command_history_pos > 1:
-                            command_history_pos -= 1
-                        if command_history_pos >= 1:
-                            command_buffer = my_system.command_history[-command_history_pos]
+            # Console History Operations
+            elif last_data == "<*bck*>" or last_data == "<*fwd*>":
+                mes_type = "history"
+                if last_data == "<*bck*>":
+                    if len(my_system.command_history) > 0:
+                        command_buffer = my_system.command_history[-command_history_pos]
+                    if len(my_system.command_history) > command_history_pos:
+                        command_history_pos += 1
+                elif last_data == "<*fwd*>":
+                    if command_history_pos > 1:
+                        command_history_pos -= 1
+                    if command_history_pos >= 1:
+                        command_buffer = my_system.command_history[-command_history_pos]
 
-                    mes_object = {"type": mes_type, "content": command_buffer}
-                    print("History:", my_system.command_history, command_buffer)
+                mes_object = {"type": mes_type, "content": command_buffer}
+                print("History:", my_system.command_history, command_buffer)
 
-                # Process new command after newline
-                elif last_data == "\n":
-                    if len(command_buffer) > 0:
-                        my_system.command_history.append(command_buffer)
-                        command_history_pos = 1
-                        command_list = command_buffer.split(" ")
-                        command_buffer = ""
-                        mes_object = await process_command(websocket, command_list)
-                    else:
-                        mes_type = "text"
-                        mes_content = "\n$"
-                        mes_object = {"type": mes_type, "content": mes_content}
-
-                # Read next char into command buffer
+            # Process new command after newline
+            elif last_data == "\n":
+                if len(command_buffer) > 0:
+                    my_system.command_history.append(command_buffer)
+                    command_history_pos = 1
+                    command_list = command_buffer.split(" ")
+                    command_buffer = ""
+                    mes_object = await process_command(websocket, command_list)
                 else:
-                    command_buffer += last_data
-                    # echo character to websocket
-                    mes_object = {"type": "text", "content": last_data}
+                    mes_object = {"type": "text", "content": "\n$"}
 
-                await websocket.send_text(json.dumps(mes_object))
+            # Read next char into command buffer
+            else:
+                command_buffer += last_data
+                # echo character to websocket
+                mes_object = {"type": "text", "content": last_data}
+
+            await websocket.send_text(json.dumps(mes_object))
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -171,8 +174,7 @@ async def process_command(websocket, command_list):
         mes_content = "clear"
 
     elif command_list[0] == "help":
-        available_commands = ["help", "clear", "exit", "ls", "cwd", "cd [dir]", "cat [file]",
-                              "fib [int]", "rand [int]", "ascii [file]"]
+        available_commands = ["help", "clear", "exit", "rand [int]", "ascii [filename]", "AI [prompt]"]
         mes_content = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
         mes_type = "text"
 
@@ -181,68 +183,18 @@ async def process_command(websocket, command_list):
         mes_type = "system"
         mes_content = "exit"
 
-    elif command_list[0] == "ls":
-        mes_content = f"\nDirectory content of {my_system.current_dir}:\n"
-        mes_content += my_system.get_all()
-        mes_content += "\n$"
-
-    elif command_list[0] == "cd":
-        if len(command_list) > 1:
-            if command_list[1] == "..":
-                target_dir = my_system.get_parent_dir()
-            else:
-                target_dir = command_list[1]
-        else:
-            target_dir = "/"
-
-        if target_dir in my_system.available_dirs:
-            my_system.set_current_dir(target_dir)
-            mes_content = f"\nChanged to: {target_dir} \n$"
-        else:
-            mes_content = f"\n{target_dir} not found or not a directory!\n"
-
-    elif command_list[0] == "cwd":
-        mes_type = "text"
-        mes_content = f"\nCurrent dir: {my_system.current_dir}\n$"
-
-    # Advanced commands
-    elif command_list[0] == "cat":
-        if len(command_list) > 1:
-            target_file = command_list[1]
-            if target_file in my_system.available_files:
-                file = my_system.files.get(target_file).get("content")
-                if file.get("owner") == my_system.current_user:
-                    mes_content = "\n" + file.get("data") + "\n$"
-                else:
-                    mes_content = "\nNot authorized! \n$"
-            else:
-                mes_content = f"\n{target_file} not found!\n$"
-        else:
-            mes_content = f"\nUsage: 'cat [file]'\n$"
-
-    elif command_list[0] == "fib":
-        if len(command_list) > 1:
-            num = int(command_list[1])
-            if num < 40:
-                result = calc_fib(num)
-                mes_content = f"\nResult: {result}\n$"
-            else:
-                mes_content = f"\nPlease input an integer between 0 and 40.\n$"
-        else:
-            mes_content = f"\nUsage: 'fib [integer number]'\n$"
-
     elif command_list[0] == "ascii":
         filename = "linux.txt"
         if len(command_list) > 1:
-            if command_list[1] == "girl":
-                filename = "girl.txt"
-            elif command_list[1] == "bikini":
-                filename = "bikini.txt"
-        with open("static/" + filename, "r") as text_file:
-            mes_content = "\n"
-            mes_content += text_file.read()
-            mes_content += "\n$"
-            print(mes_content)
+            filename = command_list[1]
+        try:
+            with open("static/" + filename, "r") as text_file:
+                mes_content = "\n"
+                mes_content += text_file.read()
+                mes_content += "\n$"
+                print(mes_content)
+        except FileNotFoundError:
+            mes_content = f"\nFile does not exist!\n$"
 
     elif command_list[0] == "rand":
         try:

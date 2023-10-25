@@ -5,10 +5,22 @@
 }
 
 html, body {
-    margin-top: 30px;
     font-family: "Lucida Console", "Courier New", monospace;
     background-color: var(--bg_color);
     color: var(--main_color);
+}
+
+body {
+
+    overflow: hidden;
+    opacity: 0.9;
+}
+
+#matrixCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
 }
 
 h5{
@@ -23,9 +35,10 @@ h5{
     padding: 10px;
     padding-bottom: 30px;
     min-width: 400px;
-    max-width: 800px;
+
     height: 70vh;
     overflow: auto;
+
 }
 
 button{

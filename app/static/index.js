@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let wsUrl = ws_scheme + '://' + window.location.host + "/wsconsole";
     let socket = new WebSocket(wsUrl);
 
+
     socket.onmessage = (event) => {
 
         const data_in = event.data;
@@ -22,7 +23,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         else if (type == "system"){
-            if (content == "clear"){
+            if (content == "nop"){
+                // do nothing
+            }
+            else if (content == "clear"){
                 terminal.innerText = "$";
                 addCursor(terminal);
             }
@@ -45,14 +49,19 @@ document.addEventListener("DOMContentLoaded", function() {
             terminal.innerText = terminal.innerText.slice(0, -1);
             prev_comm_length = 0;
             let t = terminal.innerText;
+
             for (const char of content) {
                 if (char == " "){
-                    terminal.innerHTML += "&nbsp";
+                    // html space element for inserting into the console character stream
+                    const spaceSpan = document.createElement("span");
+                    spaceSpan.innerHTML = "&nbsp;";
+                    terminal.appendChild(spaceSpan);
                 }
                 else{
                     terminal.innerText += char;
                 }
                 chars_in_line += 1;
+
             }
 
             addCursor(terminal);
@@ -112,6 +121,10 @@ document.addEventListener("DOMContentLoaded", function() {
             event.preventDefault();
             socket.send("<*fwd*>");
         }
+        else if (key === "ArrowLeft" || key == "ArrowRight") {
+            event.preventDefault();
+            //socket.send("<*bck*>");
+        }
 
         else {
             socket.send(key);
@@ -147,4 +160,8 @@ function addCursor (terminal) {
     spanElement.id = "cursor";
     spanElement.textContent = "█"; //█
     terminal.appendChild(spanElement);
+}
+
+function randomDelay() {
+
 }
