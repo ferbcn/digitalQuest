@@ -2,7 +2,10 @@ const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789カオシュンタカオ
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
 var columns = windowWidth;
-var charColor = "green";
+const colorArray = ["green", "firebrick", "purple", "skyblue", "lightgrey"];
+var colorIndex = 0;
+var charColor = colorArray[colorIndex];
+
 const streams = [];
 let canvas, ctx;
 
@@ -10,12 +13,13 @@ function setup() {
     canvas = document.getElementById('matrixCanvas');
     ctx = canvas.getContext('2d');
 
-    for (let i = 0; i < windowWidth; i++) {
+    for (let i = 0; i < columns; i++) {
         streams[i] = {
             x: i*1,
             y: Math.floor(Math.random() * window.innerHeight),
             speed: Math.random() * 10,
-            length: Math.floor(Math.random() * 3) + 1
+            length: Math.floor(Math.random() * 3) + 1,
+            text: ""
         };
     }
 }
@@ -28,6 +32,7 @@ function draw() {
     ctx.font = '16px monospace';
 
     for (let i = 0; i < streams.length; i++) {
+
         const stream = streams[i];
         let text = '';
 
@@ -35,6 +40,7 @@ function draw() {
             text += characters[Math.floor(Math.random() * characters.length)];
         }
 
+        stream.text = text;
         ctx.fillText(text, stream.x, stream.y);
 
         if (stream.y > canvas.height) {
@@ -50,15 +56,39 @@ function resizeCanvas() {
     canvas.height = window.innerHeight;
 }
 
-const colorArray = ["green", "red", "yellow", "blue"];
-var colorPos = 0;
 
 // Detect a click on the entire document
 document.addEventListener('dblclick', function(event) {
     // Code to run when any part of the document is clicked
-    charColor = colorArray[colorPos];
-    colorPos++;
-    if (colorPos >= colorArray.length) colorPos = 0;
+    charColor = colorArray[colorIndex];
+    colorIndex++;
+    if (colorIndex >= colorArray.length) colorIndex = 0;
+});
+
+// Detect window resize and redraw animation canvas
+window.addEventListener('resize', function() {
+    // Code to run when the window is resized
+    columns = window.innerWidth;
+    console.log(columns);
+    setup();
+    resizeCanvas();
+});
+
+// Mouse move event
+document.addEventListener('mousemove', function(event) {
+    const x = event.clientX;
+    const y = event.clientY;
+    //console.log(`Mouse coordinates - X: ${x}, Y: ${y}`);
+    ctx.fillStyle = colorArray[(colorIndex+1) % colorArray.length];
+    for (let i = 0; i < streams.length; i++) {
+        const stream = streams[i];
+        let radius = 50;
+        if (stream.x > x-radius && stream.x < x+radius) {
+            if (stream.y > y-radius && stream.y < y+radius){
+                ctx.fillText(stream.text, stream.x, stream.y);
+            }
+        }
+    }
 });
 
 

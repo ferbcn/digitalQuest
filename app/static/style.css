@@ -4,14 +4,13 @@
   --white: #ffffff;
 }
 
-html, body {
+html {
     font-family: "Lucida Console", "Courier New", monospace;
     background-color: var(--bg_color);
     color: var(--main_color);
 }
 
 body {
-
     overflow: hidden;
     opacity: 0.9;
 }
@@ -35,10 +34,9 @@ h5{
     padding: 10px;
     padding-bottom: 30px;
     min-width: 400px;
-
     height: 70vh;
     overflow: auto;
-
+    opacity: 0.9;
 }
 
 button{
