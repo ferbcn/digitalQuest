@@ -1,8 +1,8 @@
-const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789カオシュンタカオ';
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
-const columns = windowWidth;
-//const columns = 1000;
+var columns = windowWidth;
+var charColor = "green";
 const streams = [];
 let canvas, ctx;
 
@@ -24,7 +24,7 @@ function draw() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = 'green';
+    ctx.fillStyle = charColor;
     ctx.font = '16px monospace';
 
     for (let i = 0; i < streams.length; i++) {
@@ -48,8 +48,19 @@ function draw() {
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    //columns = canvas.width;
 }
+
+const colorArray = ["green", "red", "yellow", "blue"];
+var colorPos = 0;
+
+// Detect a click on the entire document
+document.addEventListener('dblclick', function(event) {
+    // Code to run when any part of the document is clicked
+    charColor = colorArray[colorPos];
+    colorPos++;
+    if (colorPos >= colorArray.length) colorPos = 0;
+});
+
 
 setup();
 resizeCanvas();
