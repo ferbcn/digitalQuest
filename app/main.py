@@ -174,7 +174,7 @@ async def process_command(websocket, command_list):
         mes_content = "clear"
 
     elif command_list[0] == "help":
-        available_commands = ["help", "clear", "exit", "rand [int]", "ascii [filename]", "AI [prompt]"]
+        available_commands = ["help", "clear", "exit", "rand [int]", "cat [filename]", "AI [prompt]"]
         mes_content = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
         mes_type = "text"
 
@@ -183,17 +183,19 @@ async def process_command(websocket, command_list):
         mes_type = "system"
         mes_content = "exit"
 
-    elif command_list[0] == "ascii":
+    elif command_list[0] == "cat":
         filename = "linux.txt"
         if len(command_list) > 1:
             filename = command_list[1]
         try:
-            with open("static/" + filename, "r") as text_file:
+            filepath = "static/" + filename
+            print(filepath)
+            with open(filepath, "r") as text_file:
                 mes_content = "\n"
                 mes_content += text_file.read()
                 mes_content += "\n$"
                 print(mes_content)
-        except FileNotFoundError:
+        except Exception as e:
             mes_content = f"\nFile does not exist!\n$"
 
     elif command_list[0] == "rand":
