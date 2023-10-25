@@ -141,6 +141,7 @@ async def process_command(command_list):
         filename = "linux.txt"
         if len(command_list) > 1:
             filename = command_list[1]
+            filename = filename.replace("/", "")
         try:
             filepath = "static/files/" + filename
             print(filepath)
