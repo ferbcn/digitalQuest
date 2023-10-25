@@ -44,6 +44,8 @@ class ConnectionManager:
                 self.disconnect(connection)
 
 
+manager = ConnectionManager()
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     current_level = 0
@@ -187,5 +189,5 @@ async def process_command(command_list):
 
 
 if __name__ == "__main__":
-    manager = ConnectionManager()
+
     uvicorn.run(app, host="127.0.0.1", port=8000)
