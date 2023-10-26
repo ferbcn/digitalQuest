@@ -5,14 +5,12 @@
 }
 
 html {
-    font-family: "Lucida Console", "Courier New", monospace;
-    background-color: var(--bg_color);
+    font-family: "Courier New", monospace;
     color: var(--main_color);
 }
 
 body {
     overflow: hidden;
-    opacity: 0.9;
 }
 
 #matrixCanvas {
@@ -20,6 +18,11 @@ body {
     top: 0;
     left: 0;
     z-index: -1;
+}
+
+#textCanvas {
+    margin: 5px;
+    padding: 5px;
 }
 
 h5{
