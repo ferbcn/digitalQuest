@@ -1,7 +1,6 @@
 :root {
   --main_color: lightgrey;
   --bg_color: #212529;
-  --white: #ffffff;
 }
 
 html {
@@ -14,6 +13,7 @@ body {
 }
 
 #matrixCanvas {
+    background-color: black;
     position: absolute;
     top: 0;
     left: 0;
@@ -31,12 +31,10 @@ h5{
 }
 
 .terminal {
-    color: lightgrey;
     background-color: #000;
     color: #ccc;
     padding: 10px;
     padding-bottom: 30px;
-    min-width: 400px;
     height: 70vh;
     overflow: auto;
     opacity: 0.9;

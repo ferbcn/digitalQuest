@@ -161,7 +161,3 @@ function addCursor (terminal) {
     spanElement.textContent = "█"; //█
     terminal.appendChild(spanElement);
 }
-
-function randomDelay() {
-
-}
