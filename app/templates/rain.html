@@ -1,25 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="{{ url_for('static', path='rain.css') }}">
     <title>Matrix Rain</title>
-        <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: black;
-        }
-
-        #matrixCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: -1;
-        }
-    </style>
 </head>
 <body>
     <canvas id="matrixCanvas"></canvas>
+
+    <div class="container">
+        <input type="checkbox" id="switch"/>
+        <label for="switch">Toggle</label>
+    </div>
 
     <script src="{{ url_for('static', path='rain.js') }}"></script>
 </body>

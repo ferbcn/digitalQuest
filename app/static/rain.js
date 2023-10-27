@@ -5,6 +5,7 @@ var columns = windowWidth;
 const colorArray = ["green", "firebrick", "purple", "skyblue", "lightgrey"];
 var colorIndex = 0;
 var charColor = colorArray[colorIndex];
+var run_anim = true;
 
 const streams = [];
 let canvas, ctx;
@@ -25,28 +26,30 @@ function setup() {
 }
 
 function draw() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (run_anim){
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = charColor;
-    ctx.font = '16px monospace';
+        ctx.fillStyle = charColor;
+        ctx.font = '16px monospace';
 
-    for (let i = 0; i < streams.length; i++) {
+        for (let i = 0; i < streams.length; i++) {
 
-        const stream = streams[i];
-        let text = '';
+            const stream = streams[i];
+            let text = '';
 
-        for (let j = 0; j < stream.length; j++) {
-            text += characters[Math.floor(Math.random() * characters.length)];
-        }
+            for (let j = 0; j < stream.length; j++) {
+                text += characters[Math.floor(Math.random() * characters.length)];
+            }
 
-        stream.text = text;
-        ctx.fillText(text, stream.x, stream.y);
+            stream.text = text;
+            ctx.fillText(text, stream.x, stream.y);
 
-        if (stream.y > canvas.height) {
-            stream.y = 0;
-        } else {
-            stream.y += stream.speed;
+            if (stream.y > canvas.height) {
+                stream.y = 0;
+            } else {
+                stream.y += stream.speed;
+            }
         }
     }
 }
@@ -91,6 +94,27 @@ document.addEventListener('mousemove', function(event) {
     }
 });
 
+// Change digital rain colors according to key strokes on keyboard
+document.addEventListener("keydown", (event) => {
+    const key = event.key.toUpperCase();
+    ctx.fillStyle = colorArray[(colorIndex+1) % colorArray.length];
+    for (let i = 0; i < streams.length; i++) {
+        const stream = streams[i];
+        if (stream.text.indexOf(key) > -1) {
+            ctx.fillText(stream.text, stream.x, stream.y);
+        }
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleSwitch = document.getElementById("switch");
+    const content = document.querySelector(".content");
+
+    toggleSwitch.addEventListener("click", function () {
+        if (run_anim) run_anim = false;
+        else run_anim = true;
+    });
+});
 
 setup();
 resizeCanvas();
