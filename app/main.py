@@ -57,11 +57,6 @@ def index(request: Request):
     return templates.TemplateResponse("rain.html", {"request": request})
 
 
-@app.get("/toggle", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse("toggle.html", {"request": request})
-
-
 # Websocket endpoint
 @app.websocket("/wsconsole")
 async def websocket_endpoint(websocket: WebSocket):
