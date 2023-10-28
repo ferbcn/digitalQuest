@@ -119,31 +119,44 @@ async def websocket_endpoint(websocket: WebSocket):
 async def process_command(command_list):
     print("Command and args: ", command_list)
     mes_type = "text"   # default message type
+    filepath = "static/files/"
 
-    if command_list[0] == "hello":
+    command = command_list[0]
+
+    if command == "hello":
         # await websocket.send_text("\nworld!\n$")
         mes_content = "\nworld!\n$"
 
         # Basic commands
-    elif command_list[0] == "clear":
+    elif command == "cls":
         mes_type = "system"
         mes_content = "clear"
 
-    elif command_list[0] == "help":
-        available_commands = ["help", "clear", "exit", "rand [int]", "cat [filename]", "AI [prompt]"]
+    elif command == "help":
+        available_commands = ["help: this message",
+                              "cls: clear screen",
+                              "exit: restart console",
+                              "rand [n]: print random string of length n",
+                              "ls: list files",
+                              "cat [filename]: print file content",
+                              "ai [prompt]: ask something to an AI"]
         mes_content = "\nAvailable commands:\n" + "\n".join([com for com in available_commands]) + "\n$"
         mes_type = "text"
 
-    elif command_list[0] == "exit":
-        # command_history = []
+    elif command == "ls":
+        files = os.listdir(filepath)
+        mes_content = "\nAvailable files:\n" + "\n".join([f for f in files]) + "\n$"
+        mes_type = "text"
+
+    elif command == "exit":
         mes_type = "system"
         mes_content = "exit"
 
-    elif command_list[0] == "cat":
+    elif command == "cat":
         filename = "linux.txt"
         if len(command_list) > 1:
             filename = command_list[1]
-            filename = filename.replace("/", "")
+            filename = filename.replace("/", "")    # Input sanitation avoids reading upper directories
         try:
             filepath = "static/files/" + filename
             print(filepath)
@@ -155,7 +168,7 @@ async def process_command(command_list):
         except Exception as e:
             mes_content = f"\nFile does not exist!\n$"
 
-    elif command_list[0] == "rand":
+    elif command == "rand":
         try:
             length = int(command_list[1])
         except Exception:
@@ -166,7 +179,7 @@ async def process_command(command_list):
             rand_str += chr(random.randint(64, 128))
         mes_content += f"{rand_str}\n$"
 
-    elif command_list[0] == "AI":
+    elif command == "ai":
         prompt = " ".join([com for com in command_list[1:]])
         print(prompt)
 

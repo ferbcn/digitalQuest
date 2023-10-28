@@ -106,17 +106,31 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const toggleSwitch = document.getElementById("switch");
-    const content = document.querySelector(".content");
 
+const toggleSwitch = document.getElementById("switch");
+    const content = document.querySelector(".content");
     toggleSwitch.addEventListener("click", function () {
-        if (run_anim) run_anim = false;
-        else run_anim = true;
-    });
+        run_anim = run_anim ? false:true;
+        document.getElementById('matrixCanvas').style.opacity = Number(run_anim);
+        //document.getElementById('cursor').style.opacity = 1;
+
 });
+
+window.addEventListener('resize', resizeCanvas);
 
 setup();
 resizeCanvas();
 setInterval(draw, 50);
-window.addEventListener('resize', resizeCanvas);
+
+
+/*
+document.addEventListener("DOMContentLoaded", function () {
+    // Delay the first call by 1000 milliseconds (1 second)
+    setTimeout(function() {
+        // do something
+    }, 1000);
+});
+*/
+
+
+
