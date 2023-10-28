@@ -1,3 +1,29 @@
+:root {
+  --main_color: lightgrey;
+  --bg_color: #212529;
+}
+
+html {
+    font-family: "Courier New", monospace;
+    color: var(--main_color);
+}
+
+body {
+    overflow: hidden;
+    color: var(--main_color);
+    background-color: var(--bg_color);
+}
+
+#matrixCanvas {
+    background-color: black;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    opacity: 1;
+    transition: opacity 1s ease; /* You can adjust the duration and easing function */
+}
+
 body {
 	margin: 0;
     padding: 0;
